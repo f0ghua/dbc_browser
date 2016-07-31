@@ -329,6 +329,8 @@ void DbWindow::updateTableViewNodes()
     }
 
     postbuildTableView();
+
+    statusBar()->showMessage(tr("%1 Nodes").arg(row));
 }
 
 void DbWindow::updateTableViewMessages()
@@ -447,6 +449,8 @@ void DbWindow::updateTableViewMessages()
     }
 
     postbuildTableView();
+
+    statusBar()->showMessage(tr("%1 Messages").arg(row));
 }
 
 void DbWindow::updateTableViewSignals()
@@ -568,7 +572,8 @@ void DbWindow::updateTableViewSignals()
 
     postbuildTableView();
 
-    emit statusEvent(tr("%1 Signals").arg(row));
+    statusBar()->showMessage(tr("%1 Signals").arg(row));
+
 }
 
 void DbWindow::buildTableView()
