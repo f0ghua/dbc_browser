@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="ecu">pics/ecu.png</file>
+        <file alias="env">pics/env.png</file>
+        <file alias="message">pics/message.png</file>
+        <file alias="network">pics/network.png</file>
+        <file alias="node">pics/node.png</file>
+        <file alias="signal">pics/signal.png</file>
+    </qresource>
+</RCC>
