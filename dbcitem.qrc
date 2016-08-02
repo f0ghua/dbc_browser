@@ -6,5 +6,6 @@
         <file alias="network">pics/network.png</file>
         <file alias="node">pics/node.png</file>
         <file alias="signal">pics/signal.png</file>
+        <file alias="tb_open">pics/tb_open16x16.png</file>
     </qresource>
 </RCC>

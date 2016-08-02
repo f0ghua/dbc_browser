@@ -92,6 +92,8 @@ static const char endl[] = "\r\n";
 namespace Vector {
 namespace DBC {
 
+std::vector<std::string> split(std::string str, std::string pattern);
+
 #if 1
 /* Removes trailing spaces incl. windows/unix/mac line endings. */
 void File::chomp(std::string & line)
@@ -308,6 +310,7 @@ void File::readSignal(Network & network, Message & message, std::string & line)
         signal.unit = m[12];
 
         /* Receivers */
+#if 0
         std::istringstream iss(m[13]);
         while (iss.good()) {
             std::string node;
@@ -316,6 +319,15 @@ void File::readSignal(Network & network, Message & message, std::string & line)
                 signal.receivers.insert(node);
             }
         }
+#else
+        std::string pattern = ",";
+        std::vector<std::string> receiver = split(m[13], pattern);
+
+        for(unsigned int i = 0; i < receiver.size(); i++)
+        {
+            signal.receivers.insert(receiver[i]);
+        }
+#endif
         return;
     }
 

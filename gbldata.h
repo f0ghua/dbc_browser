@@ -26,7 +26,13 @@ public:
     static int dbcGetNetworkAttributes(QMap<QString, Vector::DBC::Attribute *> &mapNA, Vector::DBC::Network *network);
     static QString dbcGetStrAttributeValue(Vector::DBC::Attribute *attr,Vector::DBC::AttributeDefinition::ObjectType objectType,Vector::DBC::Network *network);
     static std::vector<std::string> *dbcGetAttributeDefinitionEnum(Vector::DBC::AttributeDefinition::ObjectType objType, std::string sName, Vector::DBC::Network *network);
+    static void dbcGetAttributesDefault(std::map<std::string, QString> &mapAttr, Vector::DBC::AttributeDefinition::ObjectType objectType, Vector::DBC::Network *network)   ;
     static void dbcGetAttributeDefinitions(std::set<std::string> &setAttrsName, Vector::DBC::AttributeDefinition::ObjectType objectType, Vector::DBC::Network *network);
+    static std::set<Vector::DBC::Message *> dbcGetTxMessages4Node(const std::string nodeName, Vector::DBC::Network *network);
+    static std::set<Vector::DBC::Message *> dbcGetRxMessages4Node(const std::string nodeName, Vector::DBC::Network *network);
+    static std::string dbcGetMessageSignalGroup(const std::string sigName, Vector::DBC::Message *message);
+    static Vector::DBC::Signal *dbcGetTxSignal4Node(const std::string nodeName, const std::string sigName, Vector::DBC::Message **message, Vector::DBC::Network *network);
+    static Vector::DBC::Signal *dbcGetRxSignal4Node(const std::string nodeName, const std::string sigName, Vector::DBC::Message **message, Vector::DBC::Network *network);
 
     GblData();
 };

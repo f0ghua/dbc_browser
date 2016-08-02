@@ -126,54 +126,47 @@ void GblData::dbcGetAttributeDefinitions(std::set<std::string> &setAttrsName,
     return;
 }
 
-#if 0
-void GblData::dbcGetObjectAttributes(QMap<QString, Vector::DBC::Attribute *> &mapNA,
+/**
+ * [GblData::dbcGetAttributesDefault get all attributes of the object and set with default value]
+ *
+ * @param mapAttr      [return name/value pair of attributes]
+ * @param objectType   [description]
+ * @param network      [description]
+ */
+
+void GblData::dbcGetAttributesDefault(std::map<std::string, QString> &mapAttr,
                     Vector::DBC::AttributeDefinition::ObjectType objectType,
                     Vector::DBC::Network *network)
 {
-    int count = 0;
-    QString strAttrName;
+    std::string strAttrName;
+    QString qTempStr;
+    std::map<std::string, Vector::DBC::Attribute>::iterator itMap;
 
     for (auto attributeDefinition: network->attributeDefinitions)
     {
         if (attributeDefinition.second.objectType != objectType)
             continue;
 
-        strAttrName = QString::fromStdString(attributeDefinition.second.name);
-
-        std::map<std::string, Vector::DBC::Attribute>::iterator itAttrDefault;
-        for (itAttrDefault = network->attributeDefaults.begin();
-            itAttrDefault != network->attributeDefaults.end();
-            itAttrDefault++
-            )
-        {
-            if ((*itAttrDefault).second.name == attributeDefinition.second.name)
-            {
-                //cout << attributeDefinition.second.name << ", addr = " << &(network->attributeDefaults[attributeDefault.second.name]) << endl;
-                mapNA.insert(strAttrName, &(*itAttrDefault).second);
-            }
-        }
+        strAttrName = attributeDefinition.second.name;
+        mapAttr.insert(
+            std::map<std::string, QString>::value_type(strAttrName, ""));
     }
 
-    if (objectType == Vector::DBC::AttributeDefinition::ObjectType::Message)
+    for(auto it : mapAttr)
     {
-        /* loop over messages */
-        for (auto message : network->messages)
+        itMap = network->attributeDefaults.find(it.first);
+        if ((itMap) != network->attributeDefaults.end())
         {
-            /* loop over attributes */
-            std::map<std::string, Vector::DBC::Attribute>::iterator iter;
-            for (iter = message.second.attributeValues.begin();
-                iter != message.second.attributeValues.end();
-                iter++)
-            {
-                mapNA.insert(strAttrName, &(*iter).second);
-            }
-        }
-    }
+            qTempStr = GblData::dbcGetStrAttributeValue(
+                        &itMap->second,
+                        Vector::DBC::AttributeDefinition::ObjectType::Signal,
+                        network);
 
-    return;
+            mapAttr[it.first] = qTempStr;
+        }
+
+    }
 }
-#endif
 
 QString GblData::dbcGetStrAttributeValue(
     Vector::DBC::Attribute *attr,
@@ -239,6 +232,133 @@ std::vector<std::string> *GblData::dbcGetAttributeDefinitionEnum(
             )
         {
             return &((*iterAttrPair).second.enumValues);
+        }
+    }
+
+    return nullptr;
+}
+
+std::set<Vector::DBC::Message *> GblData::dbcGetTxMessages4Node(
+    const std::string nodeName,
+    Vector::DBC::Network *network
+)
+{
+    std::set<Vector::DBC::Message *> setTxMsg;
+    std::map<unsigned int, Vector::DBC::Message>::iterator itMsg;
+
+    for (itMsg=network->messages.begin(); itMsg!=network->messages.end(); itMsg++)
+    {
+        if ((*itMsg).second.transmitter.empty())
+        {
+            if ((*itMsg).second.transmitters.find(nodeName) != (*itMsg).second.transmitters.end())
+                setTxMsg.insert(&(*itMsg).second);
+        }
+        else
+        {
+            if ((*itMsg).second.transmitter == nodeName)
+            {
+                setTxMsg.insert(&(*itMsg).second);
+            }
+        }
+    }
+
+    return setTxMsg;
+}
+
+std::set<Vector::DBC::Message *> GblData::dbcGetRxMessages4Node(
+    const std::string nodeName,
+    Vector::DBC::Network *network
+)
+{
+    std::set<Vector::DBC::Message *> setRxMsg;
+    std::map<unsigned int, Vector::DBC::Message>::iterator itMsg;
+
+    for (itMsg=network->messages.begin(); itMsg!=network->messages.end(); itMsg++)
+    for (auto signalPair : (*itMsg).second.signal)
+    {
+#ifdef F_DEBUG
+        cout << "Signal:" << signalPair.second.name << ", nodeName: " << nodeName << endl;
+        for (auto r : signalPair.second.receivers)
+        {
+            cout << "    " << r << endl;
+        }
+#endif
+        if (signalPair.second.receivers.find(nodeName) != signalPair.second.receivers.end())
+            setRxMsg.insert(&(*itMsg).second);
+    }
+
+    return setRxMsg;
+}
+
+std::string GblData::dbcGetMessageSignalGroup(
+    const std::string sigName,
+    Vector::DBC::Message *message
+)
+{
+    std::set<std::string>::iterator itSg;
+
+    for (auto sgPair : message->signalGroups)
+    {
+        itSg = sgPair.second.signal.find(sigName);
+        if (itSg != sgPair.second.signal.end())
+            return (*itSg);
+    }
+
+    return std::string();
+}
+
+Vector::DBC::Signal *GblData::dbcGetTxSignal4Node(
+    const std::string nodeName,
+    const std::string sigName,
+    Vector::DBC::Message **message,
+    Vector::DBC::Network *network
+    )
+{
+    std::map<std::string, Vector::DBC::Signal>::iterator itSignal;
+    std::set<Vector::DBC::Message *> setMsg;
+    std::set<Vector::DBC::Message *>::iterator itSet;
+
+    setMsg = dbcGetTxMessages4Node(nodeName, network);
+    for (itSet = setMsg.begin(); itSet != setMsg.end(); itSet++)
+    {
+        for (itSignal = (*itSet)->signal.begin();
+            itSignal != (*itSet)->signal.end();
+            itSignal++)
+        {
+            if((*itSignal).second.name == sigName)
+            {
+                *message = ((*itSet));
+                return &((*itSignal).second);
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+Vector::DBC::Signal *GblData::dbcGetRxSignal4Node(
+    const std::string nodeName,
+    const std::string sigName,
+    Vector::DBC::Message **message,
+    Vector::DBC::Network *network
+    )
+{
+    std::map<std::string, Vector::DBC::Signal>::iterator itSignal;
+    std::set<Vector::DBC::Message *> setMsg;
+    std::set<Vector::DBC::Message *>::iterator itSet;
+
+    setMsg = dbcGetRxMessages4Node(nodeName, network);
+    for (itSet = setMsg.begin(); itSet != setMsg.end(); itSet++)
+    {
+        for (itSignal = (*itSet)->signal.begin();
+            itSignal != (*itSet)->signal.end();
+            itSignal++)
+        {
+            if((*itSignal).second.name == sigName)
+            {
+                *message = ((*itSet));
+                return &((*itSignal).second);
+            }
         }
     }
 

@@ -5,8 +5,13 @@
 //#include <QWidget>
 #include "dbcport.h"
 
-#define DBC_CATEGORY_MARK           Qt::UserRole + 1
-#define DBC_OBJECT_MARK             Qt::UserRole + 2
+#define TYPE_TX_OBJECT              0
+#define TYPE_RX_OBJECT              1
+
+#define ROLE_DBC_MARK               Qt::UserRole + 1
+//#define DBC_CATEGORY_MARK           DBC_ROLE_MARK
+//#define DBC_OBJECT_MARK             Qt::UserRole + 2
+//#define DBC_ITEM_MARK               Qt::UserRole + 3
 
 #define MARK_CATEGORY_NETWORK       1
 #define MARK_CATEGORY_ECU           2
@@ -14,14 +19,27 @@
 #define MARK_CATEGORY_NODE          4
 #define MARK_CATEGORY_MESSAGE       5
 #define MARK_CATEGORY_SIGNAL        6
+#define MARK_CATEGORY_END           MARK_CATEGORY_SIGNAL
 
-#define MARK_OBJECT_NETWORK         1
-#define MARK_OBJECT_ECU             2
-#define MARK_OBJECT_ENV             3
-#define MARK_OBJECT_NODE            4
-#define MARK_OBJECT_MESSAGE         5
-#define MARK_OBJECT_SIGNAL          6
-#define MARK_OBJECT_TXMESSAGE       7
+#define MARK_OBJECT_NETWORK         (MARK_CATEGORY_END+1)
+#define MARK_OBJECT_ECU             (MARK_CATEGORY_END+2)
+#define MARK_OBJECT_ENV             (MARK_CATEGORY_END+3)
+#define MARK_OBJECT_NODE            (MARK_CATEGORY_END+4)
+#define MARK_OBJECT_MESSAGE         (MARK_CATEGORY_END+5)
+#define MARK_OBJECT_SIGNAL          (MARK_CATEGORY_END+6)
+#define MARK_OBJECT_END             MARK_OBJECT_SIGNAL
+
+#define MARK_ITEM_CAT_NETWORK_TXMESSAGE     (MARK_OBJECT_END+1)
+#define MARK_ITEM_CAT_NETWORK_SIGNALS       (MARK_OBJECT_END+2)
+#define MARK_ITEM_CAT_NETWORK_NODE          (MARK_OBJECT_END+3)
+#define MARK_ITEM_CAT_ECU_ECU               (MARK_OBJECT_END+4)
+#define MARK_ITEM_CAT_NODES_NODE            (MARK_OBJECT_END+5)
+#define MARK_ITEM_CAT_NODES_TXMESSAGES      (MARK_OBJECT_END+6)
+#define MARK_ITEM_CAT_NODES_RXMESSAGES      (MARK_OBJECT_END+7)
+#define MARK_ITEM_CAT_NODES_TXMAPSIGS       (MARK_OBJECT_END+8)
+#define MARK_ITEM_CAT_NODES_RXMAPSIGS       (MARK_OBJECT_END+9)
+#define MARK_ITEM_CAT_NODES_TXMAPSIGS_SIG   (MARK_OBJECT_END+10)
+#define MARK_ITEM_CAT_NODES_RXMAPSIGS_SIG   (MARK_OBJECT_END+11)
 
 namespace Ui {
 class DbWindow;
@@ -37,6 +55,7 @@ public:
     bool loadFile(const QString &fileName);
     QString userFriendlyCurrentFile();
     QString currentFile() { return m_curFile; }
+    Vector::DBC::Network* currentNetwork() { return m_network; }
 
 signals:
     void statusEvent(const QString&);
@@ -63,15 +82,24 @@ private:
     void tvAddNodeMessages();
     void tvAddNodeSignals();
     void buildTreeView();
+    void insertSignalAttributesHeader2Model(std::map<std::string, QString> &mapAttr);
+    void insertSignalAttributesValue2Model(int row, std::map<std::string, QString> &mapAttr,Vector::DBC::Message *pMessage, Vector::DBC::Signal *pSignal);
     void prebuildTableView();
     void postbuildTableView();
     void updateTableViewNetworks();
     void updateTableViewECUs();
+    void updateTableViewECUsECU(QString ecuName);
     void updateTableViewNodes();
+    void updateTableViewNodesMessages(QString nodeName, int msgType);
+    void updateTableViewNodesMappedSignals(QString nodeName, int type);
+    void updateTableViewNodesMappedSignalsSignal(QString nodeName, QString sigName, int type);
     void updateTableViewMessages();
     void updateTableViewSignals();
+    void updateTableViewTxMessages();
+    void updateTableViewNetworkSignals();
+    void updateTableViewNetworkNode(QString nodeName);
     void buildTableView();
-    void popupDialog(const int objectType, const QModelIndex &index);
+    void popupDialog(const int itemType, const QModelIndex &index);
 };
 
 #endif // DBWINDOW_H

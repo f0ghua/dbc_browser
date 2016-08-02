@@ -387,36 +387,6 @@ void dbcGetObjectAttributesName(std::set<std::string> &setAttrsName,
     return;
 }
 
-#if 0
-void dbcGetObjectAttributes(std::map<std::string, Vector::DBC::Attribute *> &mapNA,
-                    Vector::DBC::AttributeDefinition::ObjectType objectType,
-                    Vector::DBC::Network *network)
-{
-    int count = 0;
-    std::string strAttrName;
-    std::map<std::string, Vector::DBC::Attribute>::iterator it;
-
-    for (auto attributeDefinition: network->attributeDefinitions)
-    {
-        if (attributeDefinition.second.objectType != objectType)
-            continue;
-
-        strAttrName = attributeDefinition.second.name;
-        mapNA.insert(strAttrName, (Vector::DBC::Attribute *)0);
-
-        it = network->attributeDefaults.find(strAttrName);
-        if ((it) != network->attributeDefaults.end())
-        {
-        	mapNA.insert(strAttrName, &((*it).second));
-        }
-    }
-
-    return;
-}
-#endif
-
-
-
 template <class Type>
 std::string num2string(Type v)
 {
@@ -586,6 +556,59 @@ void dumpMessageAttributes(Vector::DBC::Network *network)
 
 }
 
+
+std::set<std::string> dbcGetTxMessages4Node(
+    const std::string nodeName,
+    Vector::DBC::Network *network
+)
+{
+	std::set<std::string> setTxMsg;
+
+    for (auto message : network->messages)
+    {
+    	if (message.second.transmitter.empty())
+    	{
+    		if (message.second.transmitters.find(nodeName) != message.second.transmitters.end())
+    			setTxMsg.insert(message.second.name);
+    	}
+    	else
+    	{
+    		if (message.second.transmitter == nodeName)
+    		{
+    			setTxMsg.insert(message.second.name);
+    		}
+    	}
+    }
+
+    return setTxMsg;
+}
+
+std::set<Vector::DBC::Message *> dbcGetRxMessages4Node(
+    const std::string nodeName,
+    Vector::DBC::Network *network
+)
+{
+	std::set<Vector::DBC::Message *> setRxMsg;
+
+	std::map<unsigned int, Vector::DBC::Message>::iterator itMsg;
+
+    for (itMsg=network->messages.begin(); itMsg!=network->messages.end(); itMsg++)
+    for (auto signalPair : (*itMsg).second.signal)
+    {
+#ifdef F_DEBUG
+    	cout << "Signal:" << signalPair.second.name << ", nodeName: " << nodeName << endl;
+    	for (auto r : signalPair.second.receivers)
+    	{
+    		cout << "    " << r << endl;
+    	}
+#endif
+    	if (signalPair.second.receivers.find(nodeName) != signalPair.second.receivers.end())
+    		setRxMsg.insert(&(*itMsg).second);
+    }
+
+    return setRxMsg;
+}
+
 int main(int argc, char *argv[])
 {
 	Vector::DBC::Network network;
@@ -626,7 +649,16 @@ int main(int argc, char *argv[])
         //dumpNetworkAttributes(network);
         //dumpNodes(network);
         //dumpMessages(network);
-        dumpMessageAttributes(&network);
+        //dumpMessageAttributes(&network);
+
+        std::set<Vector::DBC::Message *> setRxMsg;
+        setRxMsg = dbcGetRxMessages4Node("AHL_AFL_PB", &network);
+        for (auto s : setRxMsg)
+        {
+        	cout << "Address = " << s << endl;
+        	cout << "Rx Message: " << s->name << endl;
+        }
+
 	}
 
 	return EXIT_SUCCESS;
