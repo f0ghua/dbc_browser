@@ -9,6 +9,7 @@
 #define TYPE_RX_OBJECT              1
 
 #define ROLE_DBC_MARK               Qt::UserRole + 1
+#define ROLE_DBC_VALUE			    Qt::UserRole + 2
 //#define DBC_CATEGORY_MARK           DBC_ROLE_MARK
 //#define DBC_OBJECT_MARK             Qt::UserRole + 2
 //#define DBC_ITEM_MARK               Qt::UserRole + 3
@@ -38,8 +39,13 @@
 #define MARK_ITEM_CAT_NODES_RXMESSAGES      (MARK_OBJECT_END+7)
 #define MARK_ITEM_CAT_NODES_TXMAPSIGS       (MARK_OBJECT_END+8)
 #define MARK_ITEM_CAT_NODES_RXMAPSIGS       (MARK_OBJECT_END+9)
-#define MARK_ITEM_CAT_NODES_TXMAPSIGS_SIG   (MARK_OBJECT_END+10)
-#define MARK_ITEM_CAT_NODES_RXMAPSIGS_SIG   (MARK_OBJECT_END+11)
+#define MARK_ITEM_CAT_NODES_TXMESSAGES_MSG	(MARK_OBJECT_END+10)
+#define MARK_ITEM_CAT_NODES_RXMESSAGES_MSG	(MARK_OBJECT_END+11)
+#define MARK_ITEM_CAT_NODES_TXMAPSIGS_SIG   (MARK_OBJECT_END+12)
+#define MARK_ITEM_CAT_NODES_RXMAPSIGS_SIG   (MARK_OBJECT_END+13)
+#define MARK_ITEM_CAT_MESSAGES_MSG          (MARK_OBJECT_END+14)
+#define MARK_ITEM_CAT_MESSAGES_MSG_SIGNAL   (MARK_OBJECT_END+15)
+#define MARK_ITEM_CAT_SIGNALS_SIG           (MARK_OBJECT_END+16)
 
 namespace Ui {
 class DbWindow;
@@ -91,6 +97,7 @@ private:
     void updateTableViewECUsECU(QString ecuName);
     void updateTableViewNodes();
     void updateTableViewNodesMessages(QString nodeName, int msgType);
+    void updateTableViewNodesMessagesMsg(unsigned int msgId);
     void updateTableViewNodesMappedSignals(QString nodeName, int type);
     void updateTableViewNodesMappedSignalsSignal(QString nodeName, QString sigName, int type);
     void updateTableViewMessages();
@@ -98,6 +105,7 @@ private:
     void updateTableViewTxMessages();
     void updateTableViewNetworkSignals();
     void updateTableViewNetworkNode(QString nodeName);
+	void updateTableViewSignalsSignal(QString sigName, unsigned int msgId);
     void buildTableView();
     void popupDialog(const int itemType, const QModelIndex &index);
 };

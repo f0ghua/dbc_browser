@@ -179,6 +179,9 @@ void DbWindow::tvAddNodeNetworkNodes()
             item = new QStandardItem(
                 GblData::m_publicIconMap[ITEM_ICON_Message],
                 msgStr);
+
+			item->setData(MARK_ITEM_CAT_NODES_TXMESSAGES_MSG, ROLE_DBC_MARK);
+			item->setData(txMsg->id, ROLE_DBC_VALUE);
             itemTxMsg->appendRow(item);
 
             for (auto signalPair : txMsg->signal)
@@ -199,6 +202,8 @@ void DbWindow::tvAddNodeNetworkNodes()
             item = new QStandardItem(
                 GblData::m_publicIconMap[ITEM_ICON_Message],
                 msgStr);
+			item->setData(MARK_ITEM_CAT_NODES_RXMESSAGES_MSG, ROLE_DBC_MARK);
+			item->setData(rxMsg->id, ROLE_DBC_VALUE);
             itemRxMsg->appendRow(item);
 
             for (auto signalPair : rxMsg->signal)
@@ -226,11 +231,16 @@ void DbWindow::tvAddNodeMessages()
 
     for (auto message : m_network->messages)
     {
-        QString sName = QString::fromStdString(message.second.name);
-
+        QString sName = QString::fromStdString(message.second.name) +
+            QString("(") +
+            QString("0x") +
+            QString::number(message.second.id, 16).toUpper() +
+            QString(")");
         item = new QStandardItem(
             GblData::m_publicIconMap[ITEM_ICON_Message],
             sName);
+        item->setData(MARK_ITEM_CAT_MESSAGES_MSG, ROLE_DBC_MARK);
+        item->setData(message.second.id, ROLE_DBC_VALUE);
         itemMessages->appendRow(item);
     }
 }
@@ -254,6 +264,8 @@ void DbWindow::tvAddNodeSignals()
             item = new QStandardItem(
                 GblData::m_publicIconMap[ITEM_ICON_Signal],
                 sName);
+            item->setData(MARK_ITEM_CAT_SIGNALS_SIG, ROLE_DBC_MARK);
+            item->setData(message.second.id, ROLE_DBC_VALUE);
             itemSignals->appendRow(item);
         }
     }
@@ -966,6 +978,42 @@ void DbWindow::updateTableViewNodesMessages(QString nodeName, int msgType)
     }
 }
 
+void DbWindow::updateTableViewNodesMessagesMsg(unsigned int msgId)
+{
+    int row = 0, colCount = 0;
+    QString qTempStr;
+    std::map<std::string, QString> mapAttr;
+    std::map<unsigned int, Vector::DBC::Message>::iterator itMsg;
+
+#ifndef F_NO_DBEUG
+	/* find the message id */
+    qDebug() << "msg id = " << msgId << endl;
+#endif
+
+    itMsg = m_network->messages.find(msgId);
+    if (itMsg == m_network->messages.end())
+        return;
+
+    prebuildTableView();
+
+    GblData::dbcGetAttributesDefault(
+        mapAttr,
+        Vector::DBC::AttributeDefinition::ObjectType::Signal,
+        m_network);
+
+    colCount = 13 + mapAttr.size();
+    m_modelTable->setColumnCount(colCount);
+
+    insertSignalAttributesHeader2Model(mapAttr);
+
+    for (auto signalPair : itMsg->second.signal)
+    {
+        insertSignalAttributesValue2Model(row, mapAttr, &itMsg->second, &signalPair.second);
+        row++;
+    }
+
+}
+
 void DbWindow::updateTableViewNodesMappedSignals(QString nodeName, int type)
 {
     int row = 0, colCount = 0;
@@ -981,7 +1029,7 @@ void DbWindow::updateTableViewNodesMappedSignals(QString nodeName, int type)
         Vector::DBC::AttributeDefinition::ObjectType::Signal,
         m_network);
 
-    colCount = 12 + mapAttr.size();
+    colCount = 13 + mapAttr.size();
     m_modelTable->setColumnCount(colCount);
 
     insertSignalAttributesHeader2Model(mapAttr);
@@ -1025,7 +1073,7 @@ void DbWindow::updateTableViewNodesMappedSignalsSignal(QString nodeName, QString
         Vector::DBC::AttributeDefinition::ObjectType::Signal,
         m_network);
 
-    colCount = 12 + mapAttr.size();
+    colCount = 13 + mapAttr.size();
     m_modelTable->setColumnCount(colCount);
 
     insertSignalAttributesHeader2Model(mapAttr);
@@ -1277,6 +1325,35 @@ void DbWindow::updateTableViewSignals()
 
 }
 
+void DbWindow::updateTableViewSignalsSignal(QString sigName, unsigned int msgId)
+{
+    int row = 0, colCount = 0;
+    std::map<std::string, QString> mapAttr;
+	std::map<unsigned int, Vector::DBC::Message>::iterator itMsg;
+	std::map<std::string, Vector::DBC::Signal>::iterator itSignal;
+
+    itMsg = m_network->messages.find(msgId);
+    if (itMsg == m_network->messages.end())
+        return;
+
+	itSignal = itMsg->second.signal.find(sigName.toStdString());
+	if (itSignal == itMsg->second.signal.end())
+		return;
+
+    prebuildTableView();
+
+    GblData::dbcGetAttributesDefault(
+        mapAttr,
+        Vector::DBC::AttributeDefinition::ObjectType::Signal,
+        m_network);
+
+    colCount = 13 + mapAttr.size();
+    m_modelTable->setColumnCount(colCount);
+
+    insertSignalAttributesHeader2Model(mapAttr);
+    insertSignalAttributesValue2Model(row, mapAttr, &itMsg->second, &itSignal->second);
+}
+
 void DbWindow::buildTableView()
 {
     updateTableViewNetworks();
@@ -1405,6 +1482,13 @@ void DbWindow::on_m_tvMain_clicked(const QModelIndex &index)
         case MARK_ITEM_CAT_NODES_RXMAPSIGS:
             updateTableViewNodesMappedSignals(index.parent().data().toString(), TYPE_RX_OBJECT);
             break;
+		case MARK_ITEM_CAT_NODES_TXMESSAGES_MSG:
+		case MARK_ITEM_CAT_NODES_RXMESSAGES_MSG:
+		{
+			QVariant var = currentItem->data(ROLE_DBC_VALUE);
+            unsigned int msgId = var.value<unsigned int>();
+            updateTableViewNodesMessagesMsg(msgId);
+		}
         case MARK_ITEM_CAT_NODES_TXMAPSIGS_SIG:
             updateTableViewNodesMappedSignalsSignal(
                 index.parent().parent().data().toString(),
@@ -1416,6 +1500,20 @@ void DbWindow::on_m_tvMain_clicked(const QModelIndex &index)
                 index.data().toString(),
                 TYPE_RX_OBJECT);
             break;
+        case MARK_ITEM_CAT_MESSAGES_MSG:
+        {
+            QVariant var = currentItem->data(ROLE_DBC_VALUE);
+            unsigned int msgId = var.value<unsigned int>();
+            updateTableViewNodesMessagesMsg(msgId);
+            break;
+        }
+        case MARK_ITEM_CAT_SIGNALS_SIG:
+        {
+            QVariant var = currentItem->data(ROLE_DBC_VALUE);
+            unsigned int msgId = var.value<unsigned int>();
+            updateTableViewSignalsSignal(index.data().toString(), msgId);
+            break;
+        }
     }
 }
 

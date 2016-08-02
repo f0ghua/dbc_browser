@@ -89,7 +89,6 @@ void Dialog_Network::updateTableViewNodes()
 
 void Dialog_Network::buildTreeViewAttributes()
 {
-    QStandardItem *item;
     QString strAttrValue;
     QMap<QString, Vector::DBC::Attribute *> mapNA;
 
