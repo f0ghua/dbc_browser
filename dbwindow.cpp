@@ -236,12 +236,22 @@ void DbWindow::tvAddNodeMessages()
             QString("0x") +
             QString::number(message.second.id, 16).toUpper() +
             QString(")");
-        item = new QStandardItem(
+        QStandardItem *itemMsg = new QStandardItem(
             GblData::m_publicIconMap[ITEM_ICON_Message],
             sName);
-        item->setData(MARK_ITEM_CAT_MESSAGES_MSG, ROLE_DBC_MARK);
-        item->setData(message.second.id, ROLE_DBC_VALUE);
-        itemMessages->appendRow(item);
+        itemMsg->setData(MARK_ITEM_CAT_MESSAGES_MSG, ROLE_DBC_MARK);
+        itemMsg->setData(message.second.id, ROLE_DBC_VALUE);
+        itemMessages->appendRow(itemMsg);
+
+        for (auto signalPair : message.second.signal)
+        {
+            item = new QStandardItem(
+                GblData::m_publicIconMap[ITEM_ICON_Signal],
+                QString::fromStdString(signalPair.second.name));
+            item->setData(MARK_ITEM_CAT_MESSAGES_MSG_SIGNAL, ROLE_DBC_MARK);
+            item->setData(message.second.id, ROLE_DBC_VALUE);
+            itemMsg->appendRow(item);
+        }
     }
 }
 
@@ -261,12 +271,30 @@ void DbWindow::tvAddNodeSignals()
         {
             QString sName = QString::fromStdString(signal.second.name);
 
-            item = new QStandardItem(
+            QStandardItem *itemSignal = new QStandardItem(
                 GblData::m_publicIconMap[ITEM_ICON_Signal],
                 sName);
-            item->setData(MARK_ITEM_CAT_SIGNALS_SIG, ROLE_DBC_MARK);
-            item->setData(message.second.id, ROLE_DBC_VALUE);
-            itemSignals->appendRow(item);
+            itemSignal->setData(MARK_ITEM_CAT_SIGNALS_SIG, ROLE_DBC_MARK);
+            itemSignal->setData(message.second.id, ROLE_DBC_VALUE);
+            itemSignals->appendRow(itemSignal);
+
+            if (!signal.second.valueDescriptions.empty())
+            {
+                QString vtName = "VtSig_" + sName;
+                QStandardItem *itemSignalVt = new QStandardItem(
+                    GblData::m_publicIconMap[ITEM_ICON_Signal],
+                    vtName);
+                itemSignal->appendRow(itemSignalVt);
+
+                for (auto vd : signal.second.valueDescriptions)
+                {
+                    QString vtValue = "0x" + QString::number(vd.first, 16).toUpper() + " : " + QString::fromStdString(vd.second);
+                    item = new QStandardItem(
+                        GblData::m_publicIconMap[ITEM_ICON_Signal],
+                        vtValue);
+                    itemSignalVt->appendRow(item);
+                }
+            }
         }
     }
 }
@@ -1204,48 +1232,21 @@ void DbWindow::updateTableViewMessages()
 
 void DbWindow::updateTableViewSignals()
 {
-    int row = 0, col = 0, colCount = 0;
+    int row = 0, colCount = 0;
     QString qTempStr;
     std::set<std::string> setAttrsName;
     std::map<std::string, QString> mapAttr; // store attribute default value
     std::set<std::string>::iterator itSet;
     std::map<std::string, Vector::DBC::Attribute>::iterator itMap;
-    QStandardItem *item;
 
     prebuildTableView();
 
-    GblData::dbcGetAttributeDefinitions(
-        setAttrsName,
+    GblData::dbcGetAttributesDefault(
+        mapAttr,
         Vector::DBC::AttributeDefinition::ObjectType::Signal,
-        m_network
-        );
+        m_network);
 
-    for(itSet=setAttrsName.begin(); itSet!=setAttrsName.end(); ++itSet)
-    {
-#ifndef F_NO_DEBUG
-        qDebug() << QString::fromStdString(*itSet) << endl;
-#endif
-        itMap = m_network->attributeDefaults.find((*itSet));
-
-        if ((itMap) != m_network->attributeDefaults.end())
-        {
-            qTempStr = GblData::dbcGetStrAttributeValue(
-                        &itMap->second,
-                        Vector::DBC::AttributeDefinition::ObjectType::Signal,
-                        m_network);
-
-            mapAttr.insert(
-                std::map<std::string, QString>::value_type(
-                    (*itSet), qTempStr));
-        }
-        else
-        {
-            mapAttr.insert(
-                std::map<std::string, QString>::value_type((*itSet), ""));
-        }
-    }
-
-    colCount = 5 + setAttrsName.size();
+    colCount = 5 + mapAttr.size();
 
 #ifndef F_NO_DEBUG
     qDebug() << "colCount = " << colCount << endl;
@@ -1253,70 +1254,12 @@ void DbWindow::updateTableViewSignals()
 
     m_modelTable->setColumnCount(colCount);
 
-    col = 0;
-    m_modelTable->setHeaderData(col++, Qt::Horizontal, "Name");
-    m_modelTable->setHeaderData(col++, Qt::Horizontal, "Length");
-    m_modelTable->setHeaderData(col++, Qt::Horizontal, "Byte Order");
-    m_modelTable->setHeaderData(col++, Qt::Horizontal, "Value Type");
-    m_modelTable->setHeaderData(col++, Qt::Horizontal, "Comment");
-    for(auto attrName : setAttrsName)
-    {
-        m_modelTable->setHeaderData(col++, Qt::Horizontal,
-            QString::fromStdString(attrName));
-    }
+    insertSignalAttributesHeader2Model(mapAttr);
 
-    /* loop over signals */
     for (auto message : m_network->messages)
     for (auto signalPair : message.second.signal)
     {
-        col = 0;
-
-        item = new QStandardItem(GblData::m_publicIconMap[ITEM_ICON_Signal],
-            QString::fromStdString(signalPair.second.name));
-        m_modelTable->setItem(row, col++, item);
-
-        item = new QStandardItem(QString::number(signalPair.second.bitSize, 10));
-        m_modelTable->setItem(row, col++, item);
-
-        if (signalPair.second.byteOrder == Vector::DBC::ByteOrder::BigEndian)
-            qTempStr = QObject::tr("Motorola");
-        else
-            qTempStr = QObject::tr("Intel");
-        item = new QStandardItem(qTempStr);
-        m_modelTable->setItem(row, col++, item);
-
-
-        if (signalPair.second.valueType == Vector::DBC::ValueType::Unsigned)
-            qTempStr = QObject::tr("Unsigned");
-        else
-            qTempStr = QObject::tr("Signed");
-        item = new QStandardItem(qTempStr);
-        m_modelTable->setItem(row, col++, item);
-
-        item = new QStandardItem(QString::fromStdString(signalPair.second.comment));
-        m_modelTable->setItem(row, col++, item);
-
-        for(itSet=setAttrsName.begin(); itSet!=setAttrsName.end(); ++itSet)
-        {
-            itMap = signalPair.second.attributeValues.find((*itSet));
-            if ((itMap) != signalPair.second.attributeValues.end())
-            {
-                qTempStr = GblData::dbcGetStrAttributeValue(
-                    &itMap->second,
-                    Vector::DBC::AttributeDefinition::ObjectType::Signal,
-                    m_network
-                    );
-                item = new QStandardItem(qTempStr);
-                m_modelTable->setItem(row, col++, item);
-            }
-            else
-            {
-                item = new QStandardItem(mapAttr[*itSet]);
-                m_modelTable->setItem(row, col++, item);
-            }
-        }
-
-        row++;
+        insertSignalAttributesValue2Model(row++, mapAttr, &message.second, &signalPair.second);
     }
 
     postbuildTableView();
@@ -1507,6 +1450,7 @@ void DbWindow::on_m_tvMain_clicked(const QModelIndex &index)
             updateTableViewNodesMessagesMsg(msgId);
             break;
         }
+        case MARK_ITEM_CAT_MESSAGES_MSG_SIGNAL:
         case MARK_ITEM_CAT_SIGNALS_SIG:
         {
             QVariant var = currentItem->data(ROLE_DBC_VALUE);

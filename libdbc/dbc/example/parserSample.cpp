@@ -609,6 +609,31 @@ std::set<Vector::DBC::Message *> dbcGetRxMessages4Node(
     return setRxMsg;
 }
 
+void dumpSignalValueTables(const std::string sigName, Vector::DBC::Network *network)
+{
+    std::map<std::string, Vector::DBC::Signal>::iterator itSignal;
+    Vector::DBC::Signal *pSignal = nullptr;
+
+    for (auto message : network->messages)
+    {
+        itSignal = message.second.signal.find(sigName);
+        if (itSignal != message.second.signal.end())
+        {
+            pSignal = &itSignal->second;
+            break;
+        }
+    }
+
+    if (pSignal == nullptr) return;
+
+    cout << "Signal : " << pSignal->name << endl;
+    for (auto vd : pSignal->valueDescriptions)
+    {
+        cout << "    " << vd.first << ":" << vd.second << endl;
+    }
+
+}
+
 int main(int argc, char *argv[])
 {
 	Vector::DBC::Network network;
@@ -650,7 +675,7 @@ int main(int argc, char *argv[])
         //dumpNodes(network);
         //dumpMessages(network);
         //dumpMessageAttributes(&network);
-
+        /*
         std::set<Vector::DBC::Message *> setRxMsg;
         setRxMsg = dbcGetRxMessages4Node("AHL_AFL_PB", &network);
         for (auto s : setRxMsg)
@@ -658,6 +683,9 @@ int main(int argc, char *argv[])
         	cout << "Address = " << s << endl;
         	cout << "Rx Message: " << s->name << endl;
         }
+        */
+
+        dumpSignalValueTables("A2ERRAlrmReq", &network);
 
 	}
 
