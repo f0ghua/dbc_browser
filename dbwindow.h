@@ -95,6 +95,7 @@ private:
     void updateTableViewNetworks();
     void updateTableViewECUs();
     void updateTableViewECUsECU(QString ecuName);
+    void updateTableViewEnvVars();
     void updateTableViewNodes();
     void updateTableViewNodesMessages(QString nodeName, int msgType);
     void updateTableViewNodesMessagesMsg(unsigned int msgId);

@@ -123,6 +123,7 @@ void DbWindow::tvAddNodeENVVar()
     item = new QStandardItem(
         GblData::m_publicIconMap[ITEM_ICON_ENV],
         QStringLiteral("Environment Variables"));
+    item->setData(MARK_CATEGORY_ENV, ROLE_DBC_MARK);
     m_modelTree->appendRow(item);
 }
 
@@ -853,6 +854,98 @@ void DbWindow::updateTableViewECUsECU(QString ecuName)
     postbuildTableView();
 }
 
+// TABLE Environment Variables ------------------------------------------------------------
+void DbWindow::updateTableViewEnvVars()
+{
+    int col = 0, row = 0;
+    QString qTempStr;
+
+    prebuildTableView();
+
+    m_modelTable->setColumnCount(10);
+    m_modelTable->setHeaderData(col++, Qt::Horizontal, "Name");
+    m_modelTable->setHeaderData(col++, Qt::Horizontal, "Type");
+    m_modelTable->setHeaderData(col++, Qt::Horizontal, "Unit");
+    m_modelTable->setHeaderData(col++, Qt::Horizontal, "Minimum");
+    m_modelTable->setHeaderData(col++, Qt::Horizontal, "Maximum");
+    m_modelTable->setHeaderData(col++, Qt::Horizontal, "Initial Value");
+    m_modelTable->setHeaderData(col++, Qt::Horizontal, "Length [Byte]");
+    m_modelTable->setHeaderData(col++, Qt::Horizontal, "Access");
+    m_modelTable->setHeaderData(col++, Qt::Horizontal, "Value Table");
+    m_modelTable->setHeaderData(col++, Qt::Horizontal, "Comment");
+
+    for (auto ev: m_network->environmentVariables)
+    {
+        col = 0;
+
+        QString qTempStr = QString::fromStdString(ev.second.name);
+        QStandardItem *item = new QStandardItem(
+            GblData::m_publicIconMap[ITEM_ICON_ENV], qTempStr);
+        m_modelTable->setItem(row, col++, item);
+
+        if (ev.second.type == Vector::DBC::EnvironmentVariable::Type::Integer)
+            qTempStr = QObject::tr("Integer");
+        else if (ev.second.type == Vector::DBC::EnvironmentVariable::Type::Float)
+            qTempStr = QObject::tr("Float");
+        else if (ev.second.type == Vector::DBC::EnvironmentVariable::Type::String)
+            qTempStr = QObject::tr("String");
+        else
+            qTempStr = QObject::tr("Data");
+        item = new QStandardItem(qTempStr);
+        m_modelTable->setItem(row, col++, item);
+
+        item = new QStandardItem(QString::fromStdString(ev.second.unit));
+        m_modelTable->setItem(row, col++, item);
+
+        item = new QStandardItem(QString::number(ev.second.minimum, 10, 0));
+        m_modelTable->setItem(row, col++, item);
+
+        if (ev.second.maximum < 65535)
+            item = new QStandardItem(QString::number(ev.second.maximum, 10, 0));
+        else
+            item = new QStandardItem(QObject::tr("%1").arg(ev.second.maximum,0,'e',3));
+        m_modelTable->setItem(row, col++, item);
+
+        if (ev.second.initialValue < 65535)
+            item = new QStandardItem(QString::number(ev.second.initialValue, 10, 0));
+        else
+            item = new QStandardItem(QObject::tr("%1").arg(ev.second.initialValue,0,'e',3));
+        m_modelTable->setItem(row, col++, item);
+
+        item = new QStandardItem(QString::number(ev.second.dataSize, 10, 0));
+        m_modelTable->setItem(row, col++, item);
+
+        if (ev.second.accessType == Vector::DBC::EnvironmentVariable::AccessType::Unrestricted)
+            qTempStr = QObject::tr("Unrestricted");
+        else if (ev.second.accessType == Vector::DBC::EnvironmentVariable::AccessType::Read)
+            qTempStr = QObject::tr("Read");
+        else if (ev.second.accessType == Vector::DBC::EnvironmentVariable::AccessType::Write)
+            qTempStr = QObject::tr("Write");
+        else
+            qTempStr = QObject::tr("ReadWrite");
+        item = new QStandardItem(qTempStr);
+        m_modelTable->setItem(row, col++, item);
+
+        if (!ev.second.valueDescriptions.empty())
+        {
+            qTempStr = "VtSig_" + QString::fromStdString(ev.second.name);
+        }
+        else
+        {
+            qTempStr = "-";
+        }
+        item = new QStandardItem(qTempStr);
+        m_modelTable->setItem(row, col++, item);
+
+        item = new QStandardItem(QString::fromStdString(ev.second.comment));
+        m_modelTable->setItem(row, col++, item);
+
+        row++;
+    }
+
+    postbuildTableView();
+}
+
 // TABLE Network Nodes ------------------------------------------------------------
 
 void DbWindow::updateTableViewNodes()
@@ -1390,6 +1483,9 @@ void DbWindow::on_m_tvMain_clicked(const QModelIndex &index)
             break;
         case MARK_CATEGORY_ECU:
             updateTableViewECUs();
+            break;
+        case MARK_CATEGORY_ENV:
+            updateTableViewEnvVars();
             break;
         case MARK_CATEGORY_NODE:
             updateTableViewNodes();
