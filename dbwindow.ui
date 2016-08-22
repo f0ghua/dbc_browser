@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>DBC Browser</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="dbcitem.qrc">
+    <normaloff>:/subwindow</normaloff>:/subwindow</iconset>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
     <property name="leftMargin">
@@ -100,6 +104,8 @@
   <widget class="QStatusBar" name="m_sbMain"/>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="dbcitem.qrc"/>
+ </resources>
  <connections/>
 </ui>

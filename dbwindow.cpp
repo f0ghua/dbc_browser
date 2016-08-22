@@ -1339,7 +1339,7 @@ void DbWindow::updateTableViewSignals()
         Vector::DBC::AttributeDefinition::ObjectType::Signal,
         m_network);
 
-    colCount = 5 + mapAttr.size();
+    colCount = 13 + mapAttr.size();
 
 #ifndef F_NO_DEBUG
     qDebug() << "colCount = " << colCount << endl;

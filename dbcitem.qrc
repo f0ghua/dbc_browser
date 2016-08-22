@@ -1,11 +1,19 @@
 <RCC>
     <qresource prefix="/">
-        <file alias="ecu">pics/ecu.png</file>
-        <file alias="env">pics/env.png</file>
-        <file alias="message">pics/message.png</file>
-        <file alias="network">pics/network.png</file>
-        <file alias="node">pics/node.png</file>
-        <file alias="signal">pics/signal.png</file>
+        <file alias="ecu_org">pics/ecu.png</file>
+        <file alias="env_org">pics/env.png</file>
+        <file alias="message_org">pics/message.png</file>
+        <file alias="network_org">pics/network.png</file>
+        <file alias="node_org">pics/node.png</file>
+        <file alias="signal_org">pics/signal.png</file>
         <file alias="tb_open">pics/tb_open16x16.png</file>
+        <file alias="message">pics/d_message.png</file>
+        <file alias="ecu">pics/d_ecu.png</file>
+        <file alias="env">pics/d_env.png</file>
+        <file alias="network">pics/d_network.png</file>
+        <file alias="node">pics/d_node.png</file>
+        <file alias="signal">pics/d_signal.png</file>
+        <file alias="mainwindow">pics/mainwindow.png</file>
+        <file alias="subwindow">pics/subwindow.png</file>
     </qresource>
 </RCC>

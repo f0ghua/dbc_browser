@@ -74,20 +74,25 @@ vector<string> getMessageReceivers(Vector::DBC::Network network, unsigned int id
 void dumpMessageSignals(Vector::DBC::Network network)
 {
     int count = 0;
+	int subCount = 0;
+
 	/* loop over messages */
 	for (auto message : network.messages) {
-		std::cout << "Message " << message.second.name << std::endl;
-
+		std::cout << "Message : " << message.second.id << " " << message.second.name << std::endl;
+		
+		subCount = 0;
 		/* loop over signals of this messages */
 		for (auto signal : message.second.signal) {
             char byteOrder = '0';
             if (signal.second.byteOrder == Vector::DBC::ByteOrder::BigEndian)
                 byteOrder = '1';
-            std::cout << "  Signal " << signal.second.name << ", byteOrder:" << byteOrder << std::endl;
+            std::cout << "    Signal : " << signal.second.name << std::endl;
             count++;
-            for (auto valDescription : signal.second.valueDescriptions)
-                cout << "    Value Description " << valDescription.first << ":" << valDescription.second << endl;
+			subCount++;
+            //for (auto valDescription : signal.second.valueDescriptions)
+            //    cout << "    Value Description " << valDescription.first << ":" << valDescription.second << endl;
 		}
+		cout << "    subCount = " << subCount << endl;
 	}
     cout << "Total Signals are " << count << endl;
 }
@@ -685,8 +690,8 @@ int main(int argc, char *argv[])
         }
         */
 
-        dumpSignalValueTables("A2ERRAlrmReq", &network);
-
+        //dumpSignalValueTables("A2ERRAlrmReq", &network);
+		dumpMessageSignals(network);
 	}
 
 	return EXIT_SUCCESS;
